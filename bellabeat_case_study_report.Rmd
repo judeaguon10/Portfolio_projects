@@ -1,0 +1,194 @@
+---
+title: "Bellabeat Case Study Analysis"
+author: "Jude"
+date: '2022-07-31'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Introduction
+This is a Capstone Project for the Google Data Analytics Certificate course. This case study is about Bellabeat Inc., where I, as a data analyst, will perform the steps of the data analysis process - ask, prepare, process, analyze, share, and act- to clean and process data to provide meaningful business insights for the stakeholders.
+
+## Ask
+
+1. What are some trends in smart device usage?
+2. How could these trends apply to Bellabeat customers?
+3. How could these trends help influence Bellabeat marketing strategy?
+
+### Business Task
+
+ * Through data analysis, gain insight on trends and usage of competing smart devices for Bellabeat to incorporate into their marketing strategy
+ 
+### Stakeholders
+
+ * The key stakeholders in this study are the Bellabeat Executive team who will rely on your analysis and recomendation and develop their marketing strategy accordingly. The other key stakeholders are fitness-concsious women, who are the target market as well as the data respondents. 
+ 
+## Prepare
+
+ * The dataset used in this case study is is called *Fitbit Fitness Tracker*, a public dataset stored in Kaggle. While the data is pertinent in our Bellabeat analysis, it does have limitations:
+ 
+ * The survey was generated in 2016, being somewhat outdated
+ * The target respondents were solely fitbit users, but the stakeholders of this  project wants to determin usage of smart devices in general
+ * The number of respondents is only 30, which may be too small of a sample to determine greater trends
+ 
+## Process
+
+ * As the dataset is too large to open and process in Excel, I will be using R for the data cleaning, analysis, and visualization processes.
+ To start off, I will install all the relevant packages, load it, then upload the dataset into R.
+ 
+```{r}
+install.packages("tidyverse")
+install.packages("diplyr")
+install.packages("janitor")
+install.packages("readr")
+install.packages("rmarkdown")
+library(tidyverse)
+library(ggplot2)
+library(janitor)
+library(rmarkdown)
+```
+ 
+```{r}
+
+daily_activity <- read.csv("dailyActivity_merged.csv")
+daily_calorie <- read.csv("dailyCalories_merged.csv")
+sleep_day <- read.csv("sleepDay_merged.csv")
+
+```
+
+Once I have my dataset loaded, it's time to get familiar with the data.
+```{r}
+head(daily_activity)
+head(daily_calorie)
+head(sleep_day)
+str(daily_activity)
+str(daily_calorie)
+str(sleep_day)
+colnames(daily_activity)
+colnames(sleep_day)
+colnames(daily_calorie)
+
+```
+
+Now that I'm familiar with the data, I move on to data cleaning. In the sleep_day dataframe I noticed that the date and time were merged into one column. So, I need to separate it and create a new dataframe.
+
+```{r}
+sleep_day_new <- sleep_day %>%
+  separate(SleepDay, c("Date", "Time"), " ")
+```
+
+Next, I check for the number of distinct participants in both dataframes
+
+```{r}
+n_distinct(daily_activity$Id)
+n_distinct(sleep_day_new$Id)
+```
+The daily_activity df shows 33 unique Id's, while sleep_day_new shows only 24. Now, to check for duplicates
+
+```{r}
+nrow(daily_activity[duplicated(daily_activity),])
+nrow(daily_calorie[duplicated(daily_calorie),])
+nrow(sleep_day_new[duplicated(sleep_day_new),])
+```
+The results show that we have 3 duplicate rows in sleep_day_new. Now, since I have discovered duplicates, its time to remove them.
+
+```{r}
+sleep_day_new <- unique(sleep_day_new)
+nrow(sleep_day_new)
+```
+## Analyze
+
+Also, before proceeding with statistical analysis and summarization of data within our dataframes, we want to remove 0 values as it can skew the results.
+
+```{r}
+daily_activity <- daily_activity %>% filter(TotalSteps !=0)
+daily_activity <- daily_activity %>%  filter(TotalDistance !=0)
+```
+
+Now, we proceed with the summary
+
+```{r}
+daily_activity %>%
+  select( TotalSteps, TotalDistance, 
+          VeryActiveMinutes, 
+          FairlyActiveMinutes, 
+          LightlyActiveMinutes, 
+          SedentaryMinutes,
+          Calories) %>%
+  summary()
+
+sleep_day_new %>%
+  select( TotalSleepRecords, 
+          TotalMinutesAsleep, 
+          TotalTimeInBed) %>%
+  summary()
+
+```
+Here are some insights we can determine about user habits based on the statistics:
+
+ * The average amount of calories burned per day is 2,362 calories.
+ * In a day, the average respondent spend around 15.9 hours sedentary, 6.9 hours asleep, and the remaining 1.2 hr active,depending on the intensity of activity.
+ * On average, those who perform Very and Fairly active activities do so for a shorter duration compared to users to do Lightly active activities for an average of 3.5 hrs
+
+
+## Share
+Next, we proceed with the data visualization process
+
+```{r}
+ggplot(data = daily_activity) + 
+  geom_point(mapping = aes(x = TotalSteps, y = Calories), color = "yellow") + 
+  geom_smooth(mapping = aes(x = TotalSteps, y = Calories)) + 
+  labs( title = "The Relationship between Calories and Steps")
+
+```
+As we can observe, there is indeed a positive correlation betwen the number of steps taken and calories burned. As the number of steps increases, the calories burned increases.
+
+```{r}
+ggplot(data = daily_activity) + 
+  geom_point(mapping = aes(x = TotalSteps, y = SedentaryMinutes), color = "blue") + 
+  geom_smooth(mapping = aes(x = TotalSteps, y = SedentaryMinutes)) + 
+  labs( title = "The Relationship between Total Steps and Sedentary Minutes")
+```
+
+From the graph, we can deduce a inverse correlation. As the number of steps increases, the total sedentary minutes decreases.
+
+```{r}
+ggplot(data = daily_activity) + 
+  geom_point(mapping = aes(x = VeryActiveMinutes, y = Calories), color = "green") + 
+  geom_smooth(mapping = aes(x = VeryActiveMinutes, y = Calories)) + 
+  labs( title = "The Relationship between Very Active Minutes and Calorie Burned")
+```
+This graph dislpays a positive correlation as the amount of calories burned increases the longer the user spends Very active.
+
+```{r}
+ggplot(data = daily_activity) + 
+  geom_point(mapping = aes(x = FairlyActiveMinutes, y = Calories), color = "green") + 
+  geom_smooth(mapping = aes(x = FairlyActiveMinutes, y = Calories)) + 
+  labs( title = "The Relationship between Fairly Active Minutes and Calories Burned")
+```
+
+```{r}
+ggplot(data = daily_activity) + 
+  geom_point(mapping = aes(x = LightlyActiveMinutes, y = Calories), color = "red") + 
+  geom_smooth(mapping = aes(x = LightlyActiveMinutes, y = Calories)) + 
+  labs( title = "The Relationship between Lightly Active Minutes and Calories Burned")
+
+```
+
+```{r}
+ggplot(data = sleep_day_new) + 
+  geom_point(mapping = aes(x = TotalMinutesAsleep, y = TotalTimeInBed), color = "purple") + 
+  geom_smooth(mapping = aes(x = TotalMinutesAsleep, y = TotalTimeInBed)) + 
+  labs( title = "The Relationship between Time Asleep and Time in Bed")
+```
+
+## Act
+
+Recommendation for Bellabeat's marketing strategy:
+
+ * Based on activity levels, users maintain varying forms of activity levels. Incorporating their Spring water bottle technology to the app, Bellabeat can set reminders for their users to rehydrate once they have reached a specific metric such as no. of calories burned or total minutes active.
+ 
+ * Seeing as different users have varying levels of activity, Bellabeat can design custom workouts on their app for users to choose from varying levels of intensity and duration for their convenience.
+ 
+ * Seeing the positive correlation between Total Minutes Asleep and Total Time in Bed, Bellabeat could optimize their app to allow users to track the duration and quality of their sleep.
