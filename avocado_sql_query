@@ -1,0 +1,77 @@
+SELECT *
+FROM `portfoli-project-practice.avocado.avocado_data`
+
+-- let's check the data we will be using
+
+SELECT
+region, year, type, date, averageprice, total_volume, _4046, _4225, _4770, small_bags, large_bags, XLarge_bags
+
+FROM `portfoli-project-practice.avocado.avocado_data`
+
+-- let's check how many years this data set has
+SELECT DISTINCT
+year
+FROM `portfoli-project-practice.avocado.avocado_data`
+
+-- let's check that the total bags add up to the total bags column
+SELECT
+small_bags + large_bags + xlarge_bags AS sum_total,
+total_bags
+FROM `portfoli-project-practice.avocado.avocado_data`
+
+-- let's check the percentage of each bag size
+
+SELECT
+date,
+region,
+small_bags,
+large_bags,
+xlarge_bags,
+total_bags,
+(small_bags / total_bags) * 100 AS small_bags_percent,
+(large_bags / total_bags) * 100 AS large_bags_percent,
+(xlarge_bags / total_bags) * 100 AS xlarge_bags_percent
+FROM `portfoli-project-practice.avocado.avocado_data`
+WHERE
+total_bags <> 0
+
+-- we can also omit specific columns to reduce cluttered results
+
+SELECT
+region,
+year,
+total_bags,
+(small_bags / total_bags) * 100 AS small_bags_percent,
+(large_bags / total_bags) * 100 AS large_bags_percent,
+(xlarge_bags / total_bags) * 100 AS xlarge_bags_percent
+FROM `portfoli-project-practice.avocado.avocado_data`
+WHERE
+total_bags <> 0
+
+-- now let's check the sales
+
+SELECT
+region,
+year,
+averageprice * total_volume AS sales
+
+FROM `portfoli-project-practice.avocado.avocado_data`
+
+-- checking the sales for Boston for each year
+
+SELECT
+region,
+date,
+year,
+averageprice * total_volume AS sales
+
+FROM `portfoli-project-practice.avocado.avocado_data`
+WHERE region = "Boston"
+ORDER BY year
+
+-- let us extract the month from the date to better organize our data
+SELECT
+region,
+year,
+EXTRACT(MONTH FROM date) AS month
+FROM `portfoli-project-practice.avocado.avocado_data`
